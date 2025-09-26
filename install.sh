@@ -27,13 +27,27 @@ else
 fi
 
 # TMUX
-## TPM
-echo "install TPM (tmux plugin manager)..."
+## TPM (tmux plugin manager)
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
-    echo "TPM ....ok"
+    echo "install TPM "
 else
     echo "TPM installed, skip..."
+fi
+
+# starship
+echo "install starship"
+if command -v starship &> /dev/null; then
+    echo "✅ Starship 已安裝。"
+else
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install starship
+    elif command -v apt &> /dev/null; then
+        curl -sS https://starship.rs/install.sh | sh -s -- -y
+    else
+        echo "❌ 錯誤：此腳本僅支援 macOS (Homebrew) 及 Debian-based 系統 (apt)。"
+    exit 1
+    fi
 fi
 
 ###############################
@@ -48,5 +62,6 @@ chsh -s $(which zsh)
 
 echo "還有幾個要手動處理..."
 echo "* 進 nvim 會自動安裝 lazy.nvim"
-echo "* 進 tmux 按 前綴 +I(大寫) 安裝 tmux 外掛"
+echo "* 裝完 lazy.nvim 跑一下 :TSInstall lua"
+echo "* 進 tmux 按 前綴(C-a) +I(大寫) 安裝 tmux 外掛"
 
