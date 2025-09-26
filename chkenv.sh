@@ -41,10 +41,10 @@ PACKAGES_TO_INSTALL=()
 NEOVIM_IS_INSTALLED=false
 
 # --------------------------
-# macOS 專用：檢查並安裝 Hack Nerd Font 字體 (Debian 不執行此函數)
+# macOS 專用：檢查並安裝 Hack Nerd Font 字體
 # --------------------------
 check_and_install_nerd_font() {
-    # ... (此函數未變動)
+    # 檢查字體是否已安裝（檢查常用的名稱或預期路徑）
     if fc-list : family | grep -i "Hack Nerd Font" >/dev/null 2>&1 || \
        ls "$HOME/Library/Fonts/Hack Regular Nerd Font Complete.ttf" >/dev/null 2>&1; then
         echo "✅ Hack Nerd Font 已安裝。"
@@ -109,11 +109,11 @@ if [ "$OS" == "macos" ]; then
     check_and_install_nerd_font
     
 # --------------------------
-# 處理 Debian 系統 (已修正使用 dpkg -s 檢查狀態)
+# 處理 Debian 系統
 # --------------------------
 elif [ "$OS" == "debian" ]; then
     for pkg in "${REQUIRED_PACKAGES[@]}"; do
-        # *** 修正後的檢查邏輯：確保套件狀態為 'install ok installed' ***
+        # 檢查套件狀態是否為 "install ok installed"
         if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
             MISSING_PACKAGES+=("$pkg")
             PACKAGES_TO_INSTALL+=("$pkg")
@@ -125,6 +125,7 @@ elif [ "$OS" == "debian" ]; then
         fi
     done
 fi
+# <-- 這是第一個 'if' (if [ "$OS" == "macos" ]) 的結束點，現在它已結束所有 OS 特定的檢查
 
 # --------------------------
 # 輸出結果 / 自動安裝
@@ -155,7 +156,8 @@ else
     echo "以下軟體套件尚未安裝 (共 ${#MISSING_PACKAGES[@]} 個)："
     printf "  - %s\n" "${MISSING_PACKAGES[@]}"
     echo ""
-
+    
+    # *** 這裡處理自動/手動安裝邏輯，使用 if/elif 結構 ***
     if [ "$OS" == "debian" ]; then
         # 檢查是否為 Root 權限
         if [ "$EUID" -eq 0 ]; then
@@ -169,7 +171,6 @@ else
                 echo "設定 neovim 為預設編輯器..."
                 update-alternatives --set editor /usr/bin/nvim
                 echo "✅ neovim 已成功設定為系統預設編輯器。"
-                fi
                 exit 0
             else
                 echo "❌ 警告：套件安裝失敗，請檢查錯誤訊息。"
@@ -180,16 +181,12 @@ else
             echo ""
             INSTALL_COMMAND="sudo apt update && sudo $INSTALL_CMD_BASE $UNIQUE_PACKAGES"
             echo "$INSTALL_COMMAND" 
-            
-            # 如果 nvim 包含在安裝列表中，提示使用者設定
-            if [[ " ${PACKAGES_TO_INSTALL[@]} " =~ " neovim " ]]; then
-                echo "並接著執行以下指令來設定 neovim 為預設編輯器："
-                echo "sudo update-alternatives --set editor /usr/bin/nvim"
-            fi
-
+            echo "並接著執行以下指令來設定 neovim 為預設編輯器："
+            echo "sudo update-alternatives --set editor /usr/bin/nvim"
             echo ""
             exit 1
         fi
+        
     elif [ "$OS" == "macos" ]; then
         # macOS 採用自動安裝 (Homebrew 通常不需要 sudo)
         echo "偵測到 macOS 系統。開始使用 Homebrew 自動安裝缺少的套件..."
@@ -204,5 +201,5 @@ else
             echo "請確認您的 Homebrew 環境已正確設定。"
             exit 1
         fi
-    fi
-fi
+    fi # <-- 這裡結束 'if [ "$OS" == "debian" ]' 的邏輯
+fi # <-- 這裡結束最外層的 'if [ ${#MISSING_PACKAGES[@]} -eq 0 ]' 邏輯
