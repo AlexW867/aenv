@@ -2,6 +2,7 @@
 
 # 定義需要檢查的套件列表
 REQUIRED_PACKAGES=(
+    sudo
     neovim
     zsh
     python3
