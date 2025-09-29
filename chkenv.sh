@@ -2,7 +2,6 @@
 
 # 定義需要檢查的套件列表
 REQUIRED_PACKAGES=(
-    sudo
     neovim
     zsh
     python3
@@ -88,7 +87,7 @@ if [ "$OS" == "macos" ]; then
     # 1. 檢查 Homebrew
     if ! command -v brew &> /dev/null; then
         echo "錯誤：未偵測到 Homebrew (brew)。請先安裝 Homebrew："
-        echo '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         exit 1
     fi
 
