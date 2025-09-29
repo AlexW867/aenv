@@ -79,7 +79,6 @@ check_and_install_nerd_font() {
     echo "✅ Hack Nerd Font 已成功安裝到 $FONT_DIR。"
 }
 
-
 # --------------------------
 # 處理 macOS 系統
 # --------------------------
@@ -90,8 +89,30 @@ if [ "$OS" == "macos" ]; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         exit 1
     fi
+    
+    # 2. 檢查 Bash 版本 (新增的邏輯)
+    echo "---"
+    echo "檢查 Bash 版本..."
+    
+    # 檢查當前執行的 Bash 版本 (腳本本身使用 /usr/bin/env bash)
+    # 提取主要版本號
+    CURRENT_BASH_MAJOR_VERSION=$(echo "$BASH_VERSION" | cut -d '.' -f 1)
 
-    # 檢查套件
+    if [[ -n "$BASH_VERSION" ]] && (( CURRENT_BASH_MAJOR_VERSION >= 4 )); then
+        echo "✅ 當前 Bash 版本 ($BASH_VERSION) >= 4，符合要求。"
+    else
+        echo "⚠️ 當前 Bash 版本 ($BASH_VERSION) 低於 4，可能導致一些套件腳本執行失敗。"
+        echo "正在將 'bash' 加入安裝清單以更新至 Homebrew 版本..."
+        
+        # 將 bash 加入待安裝清單
+        # 注意：使用 Homebrew 安裝的 Bash 會在 /usr/local/bin 或 /opt/homebrew/bin
+        # 即使它已經存在於 /bin/bash，我們仍然希望 Homebrew 版本被優先使用。
+        MISSING_PACKAGES+=("bash")
+        PACKAGES_TO_INSTALL+=("bash")
+    fi
+    echo "---"
+
+    # 3. 檢查其他套件
     for pkg in "${REQUIRED_PACKAGES[@]}"; do
         # 排除在 macOS 上通常非獨立 Homebrew formulae 的項目
         if [ "$pkg" == "python3-pip" ]; then
@@ -105,7 +126,7 @@ if [ "$OS" == "macos" ]; then
         fi
     done
 
-    # 執行字體檢查與安裝
+    # 4. 執行字體檢查與安裝
     check_and_install_nerd_font
     
 # --------------------------
@@ -125,7 +146,6 @@ elif [ "$OS" == "debian" ]; then
         fi
     done
 fi
-# <-- 這是第一個 'if' (if [ "$OS" == "macos" ]) 的結束點，現在它已結束所有 OS 特定的檢查
 
 # --------------------------
 # 輸出結果 / 自動安裝
@@ -151,6 +171,7 @@ if [ ${#MISSING_PACKAGES[@]} -eq 0 ]; then
 else
     # 情況二：有套件遺失
     # 去除重複項並建立最終指令所需的套件列表
+    # 因為 bash 也可能在清單中，這可以避免重複安裝
     UNIQUE_PACKAGES=$(printf "%s\n" "${PACKAGES_TO_INSTALL[@]}" | awk '!a[$0]++' | tr '\n' ' ')
 
     echo "以下軟體套件尚未安裝 (共 ${#MISSING_PACKAGES[@]} 個)："
@@ -201,5 +222,5 @@ else
             echo "請確認您的 Homebrew 環境已正確設定。"
             exit 1
         fi
-    fi # <-- 這裡結束 'if [ "$OS" == "debian" ]' 的邏輯
-fi # <-- 這裡結束最外層的 'if [ ${#MISSING_PACKAGES[@]} -eq 0 ]' 邏輯
+    fi 
+fi
